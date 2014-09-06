@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+
+require "irb/completion"
+require "irb"
+initializer = File.expand_path("../../initializer", __FILE__)
+require initializer
+
+irb = RUBY_PLATFORM =~ /(:?mswin|mingw)/ ? "irb.bat" : "irb"
+libs =  " -r irb/completion"
+libs << " -r #{initializer}"
+
+Dir.glob("./code/**/*.rb") do |ruby_file|
+  libs << " -r #{ruby_file}"
+end
+
+exec "#{irb} -I lib/ #{libs}"
