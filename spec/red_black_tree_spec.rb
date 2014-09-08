@@ -70,13 +70,14 @@ describe RedBlackTree do
       expect(node_to_get_rotated_down.left_child).to be_node(node_to_have_its_parent_changed)
     end
 
-    it "inserts the first node as root" do
+    it "inserts the first node as root and makes it black" do
       root = RedBlackTree::Node.new(10)
 
       tree = RedBlackTree.new
       tree.insert(root)
 
       expect(tree.root).to be_node(root)
+      expect(tree.root).to be_black
     end
 
     it "inserts a node with a smaller index on the left" do
@@ -101,6 +102,20 @@ describe RedBlackTree do
 
       expect(root.left_child).not_to be
       expect(root.right_child).to be_node(larger_node)
+    end
+
+    it "leaves new nodes red when there is no red violation" do
+      root = RedBlackTree::Node.new(10)
+      larger_node = RedBlackTree::Node.new(15)
+      smaller_node = RedBlackTree::Node.new(5)
+
+      tree = RedBlackTree.new
+      tree.insert(root)
+      tree.insert(larger_node)
+      tree.insert(smaller_node)
+
+      expect(larger_node).to be_red
+      expect(smaller_node).to be_red
     end
 
     it "balances adding a smaller and then slightly less small node to a new tree (zig zag)" do
@@ -139,213 +154,185 @@ describe RedBlackTree do
       expect(tree.root.right_child).to be_red
     end
 
-    context "when encountering a double-red collision on insert" do
-      context "when the parent has a sibling (the new node's uncle) and that sibling is red" do
-        it "recolors the parent and uncle black" do
-          root = RedBlackTree::Node.new(10)
-          parent = RedBlackTree::Node.new(5)
-          uncle = RedBlackTree::Node.new(15)
-          child = RedBlackTree::Node.new(0)
+    context "when the parent and uncle are red" do
+      it "recolors the parent and uncle black and recolors the grandparent red" do
+        root = RedBlackTree::Node.new(50)
+        greatuncle = RedBlackTree::Node.new(75)
+        grandparent = RedBlackTree::Node.new(25)
+        parent = RedBlackTree::Node.new(15)
+        uncle = RedBlackTree::Node.new(35)
+        child = RedBlackTree::Node.new(5)
 
-          tree = RedBlackTree.new
-          tree.insert(root)
-          tree.insert(parent)
-          tree.insert(uncle)
-          tree.insert(child)
+        tree = RedBlackTree.new
+        tree.insert(root)
+        tree.insert(grandparent)
+        tree.insert(greatuncle)
+        tree.insert(parent)
+        tree.insert(uncle)
+        tree.insert(child)
 
-          expect(tree.root).to be_black
-          expect(parent).to be_black
-          expect(uncle).to be_black
-          expect(child).to be_red
-        end
+        expect(grandparent).to be_red
+        expect(parent).to be_black
+        expect(uncle).to be_black
+        expect(child).to be_red
+      end
+    end
 
-        it "recolors the grandparent red" do
-          root = RedBlackTree::Node.new(50)
-          greatuncle = RedBlackTree::Node.new(75)
-          grandparent = RedBlackTree::Node.new(25)
-          parent = RedBlackTree::Node.new(15)
-          uncle = RedBlackTree::Node.new(35)
-          child = RedBlackTree::Node.new(5)
+    it "rebalances the tree by bubbling up double-red collisions (recoloring) until a rotation is needed (right rotate)" do
+      root = RedBlackTree::Node.new(50)
+      greatgreatuncle = RedBlackTree::Node.new(75)
+      greatgrandparent = RedBlackTree::Node.new(25)
+      grandparent = RedBlackTree::Node.new(15)
+      greatuncle = RedBlackTree::Node.new(35)
+      uncle = RedBlackTree::Node.new(20)
+      parent = RedBlackTree::Node.new(5)
+      child = RedBlackTree::Node.new(0)
 
-          tree = RedBlackTree.new
-          tree.insert(root)
-          tree.insert(grandparent)
-          tree.insert(greatuncle)
-          tree.insert(parent)
-          tree.insert(uncle)
-          tree.insert(child)
+      tree = RedBlackTree.new
+      tree.insert(root)
+      tree.insert(greatgreatuncle)
+      tree.insert(greatgrandparent)
+      tree.insert(grandparent)
+      tree.insert(greatuncle)
+      tree.insert(uncle)
+      tree.insert(parent)
+      tree.insert(child)
 
-          expect(tree.root).to be_black
-          expect(grandparent).to be_red
-          expect(greatuncle).to be_black
-          expect(parent).to be_black
-          expect(uncle).to be_black
-          expect(child).to be_red
-        end
+      expect(tree.root).to be_node(greatgrandparent)
+      expect(greatgrandparent.right_child).to be_node(root)
+      expect(root.left_child).to be_node(greatuncle)
+      expect(root.right_child).to be_node(greatgreatuncle)
+      expect(grandparent.right_child).to be_node(uncle)
+      expect(grandparent.left_child).to be_node(parent)
+      expect(parent.left_child).to be_node(child)
+
+      expect(tree.root).to be_black
+      expect(tree.root.left_child).to be_red
+      expect(tree.root.right_child).to be_red
+    end
+
+    it "rebalances the tree by bubbling up double-red collisions (recoloring) until a rotation is needed (left rotate)" do
+      root = RedBlackTree::Node.new(50)
+      greatgreatuncle = RedBlackTree::Node.new(25)
+      greatgrandparent = RedBlackTree::Node.new(75)
+      grandparent = RedBlackTree::Node.new(100)
+      greatuncle = RedBlackTree::Node.new(65)
+      uncle = RedBlackTree::Node.new(85)
+      parent = RedBlackTree::Node.new(125)
+      child = RedBlackTree::Node.new(150)
+
+      tree = RedBlackTree.new
+      tree.insert(root)
+      tree.insert(greatgreatuncle)
+      tree.insert(greatgrandparent)
+      tree.insert(grandparent)
+      tree.insert(greatuncle)
+      tree.insert(uncle)
+      tree.insert(parent)
+      tree.insert(child)
+
+      expect(tree.root).to be_node(greatgrandparent)
+      expect(greatgrandparent.left_child).to be_node(root)
+      expect(root.right_child).to be_node(greatuncle)
+      expect(root.left_child).to be_node(greatgreatuncle)
+      expect(grandparent.left_child).to be_node(uncle)
+      expect(grandparent.right_child).to be_node(parent)
+      expect(parent.right_child).to be_node(child)
+
+      expect(tree.root).to be_black
+      expect(tree.root.left_child).to be_red
+      expect(tree.root.right_child).to be_red
+    end
+
+    context "when the parent has no sibling and is the left child" do
+      it "promotes the parent to replace the grandparent and demotes the grandparent to be a child of the parent (right rotate)" do
+        root = RedBlackTree::Node.new(50)
+        greatuncle = RedBlackTree::Node.new(75)
+        grandparent = RedBlackTree::Node.new(25)
+        parent = RedBlackTree::Node.new(15)
+        uncle = RedBlackTree::Node.new(35)
+        child = RedBlackTree::Node.new(5)
+        new_node = RedBlackTree::Node.new(0)
+
+        tree = RedBlackTree.new
+        tree.insert(root)
+        tree.insert(grandparent)
+        tree.insert(greatuncle)
+        tree.insert(parent)
+        tree.insert(uncle)
+        tree.insert(child)
+
+        tree.insert(new_node)
+
+        expect(grandparent.left_child).to be_node(child)
+        expect(child.right_child).to be_node(parent)
+        expect(child.left_child).to be_node(new_node)
+        expect(child).to be_black
+        expect(parent).to be_red
       end
 
-      context "when the parent has a sibling (the new node's uncle) and that sibling is black" do
-        context "when the parent is the left child of the grandparent" do
-          it "rebalances the tree by bubbling up a double-red collision and rotating the great grandparent to become root" do
-            root = RedBlackTree::Node.new(50)
-            greatgreatuncle = RedBlackTree::Node.new(75)
-            greatgrandparent = RedBlackTree::Node.new(25)
-            grandparent = RedBlackTree::Node.new(15)
-            greatuncle = RedBlackTree::Node.new(35)
-            uncle = RedBlackTree::Node.new(20)
-            parent = RedBlackTree::Node.new(5)
-            child = RedBlackTree::Node.new(0)
+      it "replaces the grandparent as root with the parent" do
+        grandparent = RedBlackTree::Node.new(10)
+        parent = RedBlackTree::Node.new(5)
+        child = RedBlackTree::Node.new(0)
 
-            tree = RedBlackTree.new
-            tree.insert(root)
-            tree.insert(greatgreatuncle)
-            tree.insert(greatgrandparent)
-            tree.insert(grandparent)
-            tree.insert(greatuncle)
-            tree.insert(uncle)
-            tree.insert(parent)
-            tree.insert(child)
+        tree = RedBlackTree.new
+        tree.insert(grandparent)
+        tree.insert(parent)
+        tree.insert(child)
 
-            expect(tree.root).to be_node(greatgrandparent)
-            expect(greatgrandparent.right_child).to be_node(root)
-            expect(root.left_child).to be_node(greatuncle)
-            expect(root.right_child).to be_node(greatgreatuncle)
-            expect(grandparent.right_child).to be_node(uncle)
-            expect(grandparent.left_child).to be_node(parent)
-            expect(parent.left_child).to be_node(child)
+        expect(tree.root).to be_node(parent)
+        expect(tree.root.right_child).to be_node(grandparent)
+        expect(tree.root.left_child).to be_node(child)
+        expect(tree.root).to be_black
+        expect(tree.root.right_child).to be_red
+        expect(tree.root.left_child).to be_red
+      end
+    end
 
-            expect(tree.root).to be_black
-            expect(tree.root.left_child).to be_red
-            expect(tree.root.right_child).to be_red
-          end
-        end
+    context "when the parent has no sibling and is the right child" do
+      it "promotes the parent to replace the grandparent and demotes the grandparent to be a child of the parent (left rotate)" do
+        root = RedBlackTree::Node.new(50)
+        greatuncle = RedBlackTree::Node.new(25)
+        grandparent = RedBlackTree::Node.new(75)
+        parent = RedBlackTree::Node.new(100)
+        uncle = RedBlackTree::Node.new(60)
+        child = RedBlackTree::Node.new(125)
+        new_node = RedBlackTree::Node.new(150)
 
-        context "when the parent is the right child of the grandparent" do
-          it "rebalances the tree by bubbling up a double-red collision and rotating the great grandparent to become root" do
-            root = RedBlackTree::Node.new(50)
-            greatgreatuncle = RedBlackTree::Node.new(25)
-            greatgrandparent = RedBlackTree::Node.new(75)
-            grandparent = RedBlackTree::Node.new(100)
-            greatuncle = RedBlackTree::Node.new(65)
-            uncle = RedBlackTree::Node.new(85)
-            parent = RedBlackTree::Node.new(125)
-            child = RedBlackTree::Node.new(150)
+        tree = RedBlackTree.new
+        tree.insert(root)
+        tree.insert(grandparent)
+        tree.insert(greatuncle)
+        tree.insert(parent)
+        tree.insert(uncle)
+        tree.insert(child)
 
-            tree = RedBlackTree.new
-            tree.insert(root)
-            tree.insert(greatgreatuncle)
-            tree.insert(greatgrandparent)
-            tree.insert(grandparent)
-            tree.insert(greatuncle)
-            tree.insert(uncle)
-            tree.insert(parent)
-            tree.insert(child)
+        tree.insert(new_node)
 
-            expect(tree.root).to be_node(greatgrandparent)
-            expect(greatgrandparent.left_child).to be_node(root)
-            expect(root.right_child).to be_node(greatuncle)
-            expect(root.left_child).to be_node(greatgreatuncle)
-            expect(grandparent.left_child).to be_node(uncle)
-            expect(grandparent.right_child).to be_node(parent)
-            expect(parent.right_child).to be_node(child)
-
-            expect(tree.root).to be_black
-            expect(tree.root.left_child).to be_red
-            expect(tree.root.right_child).to be_red
-          end
-        end
+        expect(grandparent.right_child).to be_node(child)
+        expect(child.left_child).to be_node(parent)
+        expect(child.right_child).to be_node(new_node)
+        expect(child).to be_black
+        expect(parent).to be_red
       end
 
-      context "when the parent has no sibling and is the left child" do
-        it "promotes the parent to replace the grandparent and demotes the grandparent to be a child of the parent (right rotate)" do
-          root = RedBlackTree::Node.new(50)
-          greatuncle = RedBlackTree::Node.new(75)
-          grandparent = RedBlackTree::Node.new(25)
-          parent = RedBlackTree::Node.new(15)
-          uncle = RedBlackTree::Node.new(35)
-          child = RedBlackTree::Node.new(5)
-          new_node = RedBlackTree::Node.new(0)
+      it "replaces the grandparent as root with the parent" do
+        grandparent = RedBlackTree::Node.new(0)
+        parent = RedBlackTree::Node.new(5)
+        child = RedBlackTree::Node.new(10)
 
-          tree = RedBlackTree.new
-          tree.insert(root)
-          tree.insert(grandparent)
-          tree.insert(greatuncle)
-          tree.insert(parent)
-          tree.insert(uncle)
-          tree.insert(child)
+        tree = RedBlackTree.new
+        tree.insert(grandparent)
+        tree.insert(parent)
+        tree.insert(child)
 
-          tree.insert(new_node)
-
-          expect(grandparent.left_child).to be_node(child)
-          expect(child.right_child).to be_node(parent)
-          expect(child.left_child).to be_node(new_node)
-          expect(child).to be_black
-          expect(parent).to be_red
-        end
-
-        it "replaces the grandparent as root with the parent" do
-          grandparent = RedBlackTree::Node.new(10)
-          parent = RedBlackTree::Node.new(5)
-          child = RedBlackTree::Node.new(0)
-
-          tree = RedBlackTree.new
-          tree.insert(grandparent)
-          tree.insert(parent)
-          tree.insert(child)
-
-          expect(tree.root).to be_node(parent)
-          expect(tree.root.right_child).to be_node(grandparent)
-          expect(tree.root.left_child).to be_node(child)
-          expect(tree.root).to be_black
-          expect(tree.root.right_child).to be_red
-          expect(tree.root.left_child).to be_red
-        end
-      end
-
-      context "when the parent has no sibling and is the right child" do
-        it "promotes the parent to replace the grandparent and demotes the grandparent to be a child of the parent (left rotate)" do
-          root = RedBlackTree::Node.new(50)
-          greatuncle = RedBlackTree::Node.new(25)
-          grandparent = RedBlackTree::Node.new(75)
-          parent = RedBlackTree::Node.new(100)
-          uncle = RedBlackTree::Node.new(60)
-          child = RedBlackTree::Node.new(125)
-          new_node = RedBlackTree::Node.new(150)
-
-          tree = RedBlackTree.new
-          tree.insert(root)
-          tree.insert(grandparent)
-          tree.insert(greatuncle)
-          tree.insert(parent)
-          tree.insert(uncle)
-          tree.insert(child)
-
-          tree.insert(new_node)
-
-          expect(grandparent.right_child).to be_node(child)
-          expect(child.left_child).to be_node(parent)
-          expect(child.right_child).to be_node(new_node)
-          expect(child).to be_black
-          expect(parent).to be_red
-        end
-
-        it "replaces the grandparent as root with the parent" do
-          grandparent = RedBlackTree::Node.new(0)
-          parent = RedBlackTree::Node.new(5)
-          child = RedBlackTree::Node.new(10)
-
-          tree = RedBlackTree.new
-          tree.insert(grandparent)
-          tree.insert(parent)
-          tree.insert(child)
-
-          expect(tree.root).to be_node(parent)
-          expect(tree.root.right_child).to be_node(child)
-          expect(tree.root.left_child).to be_node(grandparent)
-          expect(tree.root).to be_black
-          expect(tree.root.right_child).to be_red
-          expect(tree.root.left_child).to be_red
-        end
+        expect(tree.root).to be_node(parent)
+        expect(tree.root.right_child).to be_node(child)
+        expect(tree.root.left_child).to be_node(grandparent)
+        expect(tree.root).to be_black
+        expect(tree.root.right_child).to be_red
+        expect(tree.root.left_child).to be_red
       end
     end
   end
