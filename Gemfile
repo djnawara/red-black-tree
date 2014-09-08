@@ -1,5 +1,7 @@
 source "http://rubygems.org"
 
+gem "graphviz"
+
 group :test do
   gem "rspec"
 end

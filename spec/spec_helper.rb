@@ -12,7 +12,11 @@ Dir[spec_support_glob].each do |support_file|
 end
 
 RSpec.configure do |config|
-  config.expect_with :rspec do |c|
-    c.syntax = :expect
+  config.expect_with :rspec do |assertion|
+    assertion.syntax = :expect
+  end
+
+  config.mock_with :rspec do |mocks|
+    mocks.verify_doubled_constant_names = true
   end
 end
