@@ -2,7 +2,6 @@ class RedBlackTree
   class Node
     BLACK = :black
     RED = :red
-    COLORS = [RED, BLACK].freeze
 
     attr_reader :key, :color
     attr_accessor :left_child, :right_child, :parent
@@ -73,12 +72,6 @@ class RedBlackTree
     def uncle
       return if root?
       parent.sibling
-    end
-
-    def detach!
-      @parent.left_child = nil if is_left_child?
-      @parent.right_child = nil if is_right_child?
-      @parent = nil
     end
 
     def get_label

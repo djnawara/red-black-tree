@@ -322,18 +322,6 @@ class RedBlackTree
       expect(node.get_label).to eq("(#{node.key})")
     end
 
-    specify "#detach! removes references between the node and its parent" do
-      parent = Node.new(nil)
-      child = Node.new(nil)
-      parent.left_child = child
-      child.parent = parent
-
-      child.detach!
-
-      expect(child.parent).not_to be
-      expect(parent.left_child).not_to be
-    end
-
     describe "#to_s" do
       it "outputs the node's key, parent key, and the keys of its children" do
         node = Node.new(50)
